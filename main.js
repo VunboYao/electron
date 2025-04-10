@@ -1,14 +1,19 @@
-const { app, BrowserWindow, Tray, Menu } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain } = require('electron');
 const path = require('path');
 
 
 let mainWindow;
+// 创建窗口
 const createWindow = () => {
     mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
         icon: path.join(__dirname, '/logo.ico'),
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+        }
     });
+    // 加载的文件
     mainWindow.loadFile('index.html');
 
 
@@ -22,7 +27,9 @@ const createWindow = () => {
     });
 }
 
+// 监听应用准备完成事件
 app.whenReady().then(() => {
+    ipcMain.handle('ping', () => 'pong');
     createWindow()
 
     tray = new Tray(path.join(__dirname, '/logo.ico'));
@@ -41,6 +48,7 @@ app.whenReady().then(() => {
         mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
     });
 
+    // macOS特有事件
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
             createWindow();
@@ -49,6 +57,7 @@ app.whenReady().then(() => {
 });
 
 
+// 监听窗口关闭事件
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit();
